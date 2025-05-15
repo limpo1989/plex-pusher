@@ -41,6 +41,8 @@ func main() {
 		var token = c.String("token")
 		var uid = c.String("uid")
 
+		log.SetOutput(os.Stdout)
+
 		return NewWebHook(listen).
 			On(Any, PushMessage(token, uid)).
 			Serve()
@@ -60,8 +62,12 @@ func PushMessage(token, uid string) func(ctx context.Context, event PlexEvent) e
 			msg.UIds = []string{uid}
 			log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Player.PublicAddress, event.Player.Title))
 			_, err := wxpusher.SendMessage(msg)
+			if err != nil {
+				log.Printf("error push message: %v", err)
+			}
 			return err
 		default:
+			log.Printf("ignore event: %s from %s", event.Event, event.Server.Title)
 			return nil
 		}
 	}

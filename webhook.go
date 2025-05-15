@@ -48,5 +48,6 @@ func (wh *WebHook) OnEvents(ctx context.Context, event PlexEvent) error {
 	}
 
 	// ignore events.
+	log.Printf("ignore event: %s from %s", event.Event, event.Server.Title)
 	return nil
 }
