@@ -1,6 +1,10 @@
-# plex-pusher
 
-## Help
+<div align="center">
+    <h1>Plex Pusher</h1>
+  <img src="preview.jpg" width="300px"/>
+</div>
+
+---
 ```
 $ ./plex-pusher --help
 NAME:
