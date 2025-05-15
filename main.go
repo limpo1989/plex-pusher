@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
+	"github.com/wxpusher/wxpusher-sdk-go"
 	"log"
 	"os"
 
 	"github.com/urfave/cli/v2"
-	"github.com/wxpusher/wxpusher-sdk-go"
 	"github.com/wxpusher/wxpusher-sdk-go/model"
 )
 
@@ -66,95 +65,31 @@ func PushMessage(token, uid string) func(ctx context.Context, event PlexEvent) e
 	return func(ctx context.Context, event PlexEvent) error {
 		switch event.Payload.Event {
 		case MediaPlay, MediaPause, MediaResume, MediaStop, MediaRate, LibraryNew:
-			msg := BuildMessage(event)
-			msg.AppToken = token
-			msg.UIds = []string{uid}
-			log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title))
-			_, err := wxpusher.SendMessage(msg)
-			if err != nil {
-				log.Printf("error push message: %v", err)
+
+			// render message
+			summary, content, err := RenderNotice(event)
+			if nil != err {
+				return err
 			}
-			return err
+
+			// build message
+			msg := model.NewMessage(token)
+			msg.AddUId(uid)
+			msg.SetContentType(2)
+			msg.SetSummary(summary)
+			msg.SetContent(content)
+
+			// push message
+			if _, err = wxpusher.SendMessage(msg); err != nil {
+				log.Printf("error push message: %v", err)
+				return err
+			}
+
+			log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title))
+			return nil
 		default:
 			log.Printf("ignore event: %s from %s", event.Payload.Event, event.Payload.Server.Title)
 			return nil
 		}
-	}
-}
-
-var icons = map[Event]string{
-	MediaPlay:   "▶️",
-	MediaPause:  "⏸️",
-	MediaResume: "⏯️",
-	MediaStop:   "⏹️",
-	MediaRate:   "🌟",
-	LibraryNew:  "🎞️",
-}
-
-func BuildMessage(event PlexEvent) *model.Message {
-	var title = fmt.Sprintf("%s %s", icons[Event(event.Payload.Event)], event.Payload.Metadata.Title)
-	var thumb = base64.StdEncoding.EncodeToString(event.Thumb)
-	var content = fmt.Sprintf(`
-<div style="
-        width: min(90vw, 400px); 
-        background:white;
-        border-radius:12px;
-        box-shadow:0 4px 12px rgba(0,0,0,0.1);
-        padding:min(4vw, 20px); 
-        display:flex;
-        align-items:center;
-        border-left:20px solid #ffa200;
-    ">
-	<div style="
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            gap:2px;
-            width: min(15vw, 60px);
-        ">
-			<div style="
-				width: min(10vw, 44px); 
-				height: min(10vw, 44px);
-				min-width:36px;
-				min-height:36px;
-				border-radius:50%%;
-				overflow:hidden;
-				flex-shrink:0;
-			">
-				<img src="%s" alt="头像" style="width:100%%;height:100%%;object-fit:cover;">
-			</div>
-			<div style="
-					font-size:clamp(10px, 2.5vw, 12px);
-					color:#888;
-					text-align:center;
-					width:100%%;
-					overflow:hidden;
-					text-overflow:ellipsis;
-					white-space:nowrap;
-				">
-				%s
-			</div>
-		</div>
-        <div style="flex:1;padding-right:min(3vw, 15px);margin-left:10px;">
-            <div style="font-weight:bold;font-size:clamp(8px, 4vw, 10px);margin-bottom:2px;color:#000;">%s</div>
-            <div style="font-size:clamp(5px, 3.5vw, 10px);color:#666;line-height:1.4;">%s</div>
-        </div>
-      	<div style="
-            width: min(14vw, 60px);
-            height: min(14vw, 60px);
-            border-radius:2px;
-            overflow:hidden;
-            flex-shrink:0;
-            box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        ">
-            <img src="data:image/jpeg;base64,%s" alt="专辑封面" style="width:100%;height:100%;object-fit:cover;">
-		</div>
-    </div>
-`, event.Payload.Account.Thumb, event.Payload.Account.Title, title, fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title), thumb)
-
-	return &model.Message{
-		ContentType: 2,
-		Summary:     fmt.Sprintf("%s %s: %s", icons[Event(event.Payload.Event)], event.Payload.Account.Title, event.Payload.Metadata.Title),
-		Content:     content,
 	}
 }
