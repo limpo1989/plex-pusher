@@ -69,6 +69,7 @@ func PushMessage(token, uid string) func(ctx context.Context, event PlexEvent) e
 			// render message
 			summary, content, err := RenderNotice(event)
 			if nil != err {
+				log.Printf("error render message: %v", err)
 				return err
 			}
 

@@ -52,36 +52,36 @@ type Payload struct {
 	} `json:"Player"`
 
 	Metadata struct {
-		LibrarySectionType    string   `json:"librarySectionType"`              // Type of library section (movie/show/etc)
-		RatingKey             string   `json:"ratingKey"`                       // Unique key for rating
-		Key                   string   `json:"key"`                             // Media key path
-		GUID                  string   `json:"guid"`                            // Global unique identifier
-		Slug                  string   `json:"slug"`                            // URL-friendly identifier
-		Studio                string   `json:"studio,omitempty"`                // Production studio
-		Type                  string   `json:"type"`                            // Media type
-		Title                 string   `json:"title"`                           // Media title
-		LibrarySectionTitle   string   `json:"librarySectionTitle"`             // Library section name
-		LibrarySectionID      int      `json:"librarySectionID"`                // Library section ID
-		LibrarySectionKey     string   `json:"librarySectionKey"`               // Library section key path
-		OriginalTitle         string   `json:"originalTitle,omitempty"`         // Original title
-		ContentRating         string   `json:"contentRating,omitempty"`         // Content rating (e.g., PG-13)
-		Summary               string   `json:"summary,omitempty"`               // Plot summary
-		Rating                *float64 `json:"rating,omitempty"`                // Critic rating
-		AudienceRating        *float64 `json:"audienceRating,omitempty"`        // Audience rating
-		ViewOffset            int      `json:"viewOffset"`                      // Playback position in ms
-		LastViewedAt          int64    `json:"lastViewedAt"`                    // Last viewed timestamp
-		Year                  int      `json:"year,omitempty"`                  // Release year
-		Tagline               string   `json:"tagline,omitempty"`               // Tagline/slogan
-		Thumb                 string   `json:"thumb,omitempty"`                 // Thumbnail URL
-		Art                   string   `json:"art,omitempty"`                   // Artwork URL
-		Duration              int      `json:"duration"`                        // Total duration in ms
-		OriginallyAvailableAt string   `json:"originallyAvailableAt,omitempty"` // Original release date
-		AddedAt               int64    `json:"addedAt"`                         // When added to library
-		UpdatedAt             int64    `json:"updatedAt"`                       // When last updated
-		AudienceRatingImage   string   `json:"audienceRatingImage,omitempty"`   // Audience rating image identifier
-		ChapterSource         string   `json:"chapterSource,omitempty"`         // Source of chapters
-		PrimaryExtraKey       string   `json:"primaryExtraKey,omitempty"`       // Key for primary extra content
-		RatingImage           string   `json:"ratingImage,omitempty"`           // Rating image identifier
+		LibrarySectionType    string  `json:"librarySectionType"`              // Type of library section (movie/show/etc)
+		RatingKey             string  `json:"ratingKey"`                       // Unique key for rating
+		Key                   string  `json:"key"`                             // Media key path
+		GUID                  string  `json:"guid"`                            // Global unique identifier
+		Slug                  string  `json:"slug"`                            // URL-friendly identifier
+		Studio                string  `json:"studio,omitempty"`                // Production studio
+		Type                  string  `json:"type"`                            // Media type
+		Title                 string  `json:"title"`                           // Media title
+		LibrarySectionTitle   string  `json:"librarySectionTitle"`             // Library section name
+		LibrarySectionID      int     `json:"librarySectionID"`                // Library section ID
+		LibrarySectionKey     string  `json:"librarySectionKey"`               // Library section key path
+		OriginalTitle         string  `json:"originalTitle,omitempty"`         // Original title
+		ContentRating         string  `json:"contentRating,omitempty"`         // Content rating (e.g., PG-13)
+		Summary               string  `json:"summary,omitempty"`               // Plot summary
+		Rating                float64 `json:"rating,omitempty"`                // Critic rating
+		AudienceRating        float64 `json:"audienceRating,omitempty"`        // Audience rating
+		ViewOffset            int     `json:"viewOffset"`                      // Playback position in ms
+		LastViewedAt          int64   `json:"lastViewedAt"`                    // Last viewed timestamp
+		Year                  int     `json:"year,omitempty"`                  // Release year
+		Tagline               string  `json:"tagline,omitempty"`               // Tagline/slogan
+		Thumb                 string  `json:"thumb,omitempty"`                 // Thumbnail URL
+		Art                   string  `json:"art,omitempty"`                   // Artwork URL
+		Duration              int     `json:"duration"`                        // Total duration in ms
+		OriginallyAvailableAt string  `json:"originallyAvailableAt,omitempty"` // Original release date
+		AddedAt               int64   `json:"addedAt"`                         // When added to library
+		UpdatedAt             int64   `json:"updatedAt"`                       // When last updated
+		AudienceRatingImage   string  `json:"audienceRatingImage,omitempty"`   // Audience rating image identifier
+		ChapterSource         string  `json:"chapterSource,omitempty"`         // Source of chapters
+		PrimaryExtraKey       string  `json:"primaryExtraKey,omitempty"`       // Key for primary extra content
+		RatingImage           string  `json:"ratingImage,omitempty"`           // Rating image identifier
 
 		Image []struct {
 			Alt  string `json:"alt"`  // Image description
