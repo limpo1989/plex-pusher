@@ -63,18 +63,25 @@ func (wh *WebHook) Shutdown() {
 	wh.webServer.Shutdown(context.Background())
 }
 
-func (wh *WebHook) OnEvents(ctx context.Context, event PlexEvent) error {
+func (wh *WebHook) OnEvents(ctx context.Context, event RawPlexEvent) error {
+
+	// parse request
+	ev, err := event.Parse()
+	if nil != err {
+		return err
+	}
+
 	// match events.
-	if handler, ok := wh.observes[Event(event.Event)]; ok {
-		return handler(ctx, event)
+	if handler, ok := wh.observes[Event(ev.Payload.Event)]; ok {
+		return handler(ctx, ev)
 	}
 
 	// any events
 	if handler, ok := wh.observes[Any]; ok {
-		return handler(ctx, event)
+		return handler(ctx, ev)
 	}
 
 	// ignore events.
-	log.Printf("ignore event: %s from %s", event.Event, event.Server.Title)
+	log.Printf("unreg event: %s from %s", ev.Payload.Event, ev.Payload.Server.Title)
 	return nil
 }

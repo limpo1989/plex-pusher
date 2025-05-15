@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -63,19 +64,19 @@ func main() {
 
 func PushMessage(token, uid string) func(ctx context.Context, event PlexEvent) error {
 	return func(ctx context.Context, event PlexEvent) error {
-		switch event.Event {
+		switch event.Payload.Event {
 		case MediaPlay, MediaPause, MediaResume, MediaStop, MediaRate, LibraryNew:
 			msg := BuildMessage(event)
 			msg.AppToken = token
 			msg.UIds = []string{uid}
-			log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Player.PublicAddress, event.Player.Title))
+			log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title))
 			_, err := wxpusher.SendMessage(msg)
 			if err != nil {
 				log.Printf("error push message: %v", err)
 			}
 			return err
 		default:
-			log.Printf("ignore event: %s from %s", event.Event, event.Server.Title)
+			log.Printf("ignore event: %s from %s", event.Payload.Event, event.Payload.Server.Title)
 			return nil
 		}
 	}
@@ -91,7 +92,8 @@ var icons = map[Event]string{
 }
 
 func BuildMessage(event PlexEvent) *model.Message {
-	var title = fmt.Sprintf("%s %s", icons[Event(event.Event)], event.Metadata.Title)
+	var title = fmt.Sprintf("%s %s", icons[Event(event.Payload.Event)], event.Payload.Metadata.Title)
+	var thumb = base64.StdEncoding.EncodeToString(event.Thumb)
 	var content = fmt.Sprintf(`
 <div style="
         width: min(90vw, 400px); 
@@ -101,13 +103,13 @@ func BuildMessage(event PlexEvent) *model.Message {
         padding:min(4vw, 20px); 
         display:flex;
         align-items:center;
-        border-left:25px solid #ffa200;
+        border-left:20px solid #ffa200;
     ">
 	<div style="
             display:flex;
             flex-direction:column;
             align-items:center;
-            gap:4px;
+            gap:2px;
             width: min(15vw, 60px);
         ">
 			<div style="
@@ -134,16 +136,25 @@ func BuildMessage(event PlexEvent) *model.Message {
 			</div>
 		</div>
         <div style="flex:1;padding-right:min(3vw, 15px);margin-left:10px;">
-            <div style="font-weight:300;font-size:clamp(12px, 4vw, 16px);margin-bottom:2px;color:#000;">%s</div>
-            <div style="font-size:clamp(10px, 3.5vw, 14px);color:#666;line-height:1.4;">%s</div>
+            <div style="font-weight:bold;font-size:clamp(8px, 4vw, 10px);margin-bottom:2px;color:#000;">%s</div>
+            <div style="font-size:clamp(5px, 3.5vw, 10px);color:#666;line-height:1.4;">%s</div>
         </div>
-
+      	<div style="
+            width: min(14vw, 60px);
+            height: min(14vw, 60px);
+            border-radius:2px;
+            overflow:hidden;
+            flex-shrink:0;
+            box-shadow:0 2px 8px rgba(0,0,0,0.1);
+        ">
+            <img src="data:image/jpeg;base64,%s" alt="专辑封面" style="width:100%;height:100%;object-fit:cover;">
+		</div>
     </div>
-`, event.Account.Thumb, event.Account.Title, title, fmt.Sprintf("From %s on %s", event.Player.PublicAddress, event.Player.Title))
+`, event.Payload.Account.Thumb, event.Payload.Account.Title, title, fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title), thumb)
 
 	return &model.Message{
 		ContentType: 2,
-		Summary:     fmt.Sprintf("%s %s: %s", icons[Event(event.Event)], event.Account.Title, event.Metadata.Title),
+		Summary:     fmt.Sprintf("%s %s: %s", icons[Event(event.Payload.Event)], event.Payload.Account.Title, event.Payload.Metadata.Title),
 		Content:     content,
 	}
 }

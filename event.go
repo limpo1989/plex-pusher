@@ -1,5 +1,11 @@
 package main
 
+import (
+	"encoding/json"
+	"io"
+	"mime/multipart"
+)
+
 type Account struct {
 	ID    int    `json:"id"`
 	Thumb string `json:"thumb"`
@@ -66,7 +72,7 @@ const (
 	PlaybackStarted        = "playback.started"         // Playback is started by a shared user for the server
 )
 
-type PlexEvent struct {
+type Payload struct {
 	Event    string   `json:"event"`
 	User     bool     `json:"user"`
 	Owner    bool     `json:"owner"`
@@ -74,4 +80,35 @@ type PlexEvent struct {
 	Server   Server   `json:"Server"`
 	Player   Player   `json:"Player"`
 	Metadata Metadata `json:"Metadata"`
+}
+
+type PlexEvent struct {
+	Payload Payload
+	Thumb   []byte
+}
+
+type RawPlexEvent struct {
+	Payload       string                `form:"payload"`
+	Thumb         *multipart.FileHeader `form:"thumb"`
+}
+
+func (pe *RawPlexEvent) Parse() (event PlexEvent, err error) {
+	if err = json.Unmarshal([]byte(pe.Payload), &event.Payload); nil != err {
+		return
+	}
+
+	if pe.Thumb != nil && pe.Thumb.Size > 0 {
+		var f multipart.File
+		f, err = pe.Thumb.Open()
+		if nil != err {
+			return
+		}
+		defer f.Close()
+
+		if event.Thumb, err = io.ReadAll(f); nil != err {
+			return
+		}
+	}
+
+	return
 }
