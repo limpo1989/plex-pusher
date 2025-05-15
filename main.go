@@ -35,15 +35,23 @@ func main() {
 			Required: true,
 			EnvVars:  []string{"PLEX_PUSHER_UID"},
 		},
+		&cli.BoolFlag{
+			Name:    "accesslog",
+			Usage:   "Enable accesslog",
+			EnvVars: []string{"PLEX_PUSHER_ACCESSLOG"},
+			Value:   false,
+		},
 	}
 	ppApp.Action = func(c *cli.Context) error {
 		var listen = c.String("listen")
 		var token = c.String("token")
 		var uid = c.String("uid")
+		var accesslog = c.Bool("accesslog")
 
 		log.SetOutput(os.Stdout)
 
 		return NewWebHook(listen).
+			EnableAccessLog(accesslog).
 			On(Any, PushMessage(token, uid)).
 			Serve()
 	}
