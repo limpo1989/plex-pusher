@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"mime/multipart"
-	"sync"
+
+	"github.com/limpo1989/gcache"
 )
 
 type Event string
@@ -161,8 +163,9 @@ type Payload struct {
 }
 
 type PlexThumb struct {
-	Img     []byte
-	ImgType string
+	ThumbImg  []byte
+	OriginImg []byte
+	ImgType   string
 }
 
 type PlexEvent struct {
@@ -170,7 +173,10 @@ type PlexEvent struct {
 	Thumb   PlexThumb
 }
 
-var thumbCache sync.Map
+// 专辑图缓存
+var thumbCache = gcache.New[string, PlexThumb](1000).
+	LRU().
+	Build()
 
 type RawPlexEvent struct {
 	Payload string                `form:"payload"`
@@ -190,19 +196,25 @@ func (pe *RawPlexEvent) Parse() (event PlexEvent, err error) {
 		}
 		defer f.Close()
 
-		if event.Thumb.Img, err = io.ReadAll(f); nil != err {
-			return
-		}
-
+		// 获取图片类型
 		if event.Thumb.ImgType = pe.Thumb.Header.Get("Content-Type"); len(event.Thumb.ImgType) <= 0 {
 			event.Thumb.ImgType = "image/jpeg"
 		}
 
-		thumbCache.Store(event.Payload.Metadata.GUID, event.Thumb)
+		// 读取图片数据
+		if event.Thumb.OriginImg, err = io.ReadAll(f); nil != err {
+			return
+		}
+
+		// 按照固定高度进行缩放
+		event.Thumb.ThumbImg = resizeImage(event.Thumb.ImgType, event.Thumb.OriginImg, 0, 100)
+
+		// 缓存起来
+		_ = thumbCache.Set(event.Payload.Metadata.GUID, &event.Thumb)
 	} else {
 		// find in cache
-		if v, ok := thumbCache.Load(event.Payload.Metadata.GUID); ok {
-			event.Thumb = v.(PlexThumb)
+		if thumb, err := thumbCache.Get(context.Background(), event.Payload.Metadata.GUID); nil == err && nil != thumb {
+			event.Thumb = *thumb
 		}
 	}
 

@@ -302,7 +302,7 @@ func RenderNotice(ev PlexEvent) (summary, content string, err error) {
 
 	var args = map[string]any{
 		"title":     fmt.Sprintf("%s %s", icon, ev.Payload.Metadata.Title),
-		"thumb":     base64.StdEncoding.EncodeToString(ev.Thumb.Img),
+		"thumb":     base64.StdEncoding.EncodeToString(ev.Thumb.ThumbImg),
 		"thumbType": ev.Thumb.ImgType,
 		"icons":     icons,
 		"icon":      icon,
