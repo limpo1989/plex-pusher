@@ -66,7 +66,7 @@ func PushMessage(token, uid string, events []string) func(ctx context.Context, e
 	return func(ctx context.Context, event PlexEvent) error {
 
 		if !lo.Contains(events, event.Payload.Event) && !lo.Contains(events, string(Any)) {
-			log.Printf("ignore event: %s from %s", event.Payload.Event, event.Payload.Server.Title)
+			log.Printf("🚫: %s %s %s: %s", event.Payload.Event, event.Payload.Account.Title, event.Payload.Metadata.LibrarySectionTitle, event.Payload.Metadata.Title)
 			return nil
 		}
 
