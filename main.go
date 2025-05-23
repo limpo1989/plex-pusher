@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/wxpusher/wxpusher-sdk-go"
 	"log"
 	"os"
+
+	"github.com/samber/lo"
+	"github.com/wxpusher/wxpusher-sdk-go"
 
 	"github.com/urfave/cli/v2"
 	"github.com/wxpusher/wxpusher-sdk-go/model"
@@ -35,24 +37,23 @@ func main() {
 			Required: true,
 			EnvVars:  []string{"PLEX_PUSHER_UID"},
 		},
-		&cli.BoolFlag{
-			Name:    "accesslog",
-			Usage:   "Enable accesslog",
-			EnvVars: []string{"PLEX_PUSHER_ACCESSLOG"},
-			Value:   false,
+		&cli.StringSliceFlag{
+			Name:    "events",
+			Usage:   "Specify the events to be pushed",
+			EnvVars: []string{"PLEX_PUSH_EVENT"},
+			Value:   cli.NewStringSlice("*"),
 		},
 	}
 	ppApp.Action = func(c *cli.Context) error {
 		var listen = c.String("listen")
 		var token = c.String("token")
 		var uid = c.String("uid")
-		var accesslog = c.Bool("accesslog")
+		var events = c.StringSlice("events")
 
 		log.SetOutput(os.Stdout)
 
 		return NewWebHook(listen).
-			EnableAccessLog(accesslog).
-			On(Any, PushMessage(token, uid)).
+			On(Any, PushMessage(token, uid, events)).
 			Serve()
 	}
 
@@ -61,36 +62,35 @@ func main() {
 	}
 }
 
-func PushMessage(token, uid string) func(ctx context.Context, event PlexEvent) error {
+func PushMessage(token, uid string, events []string) func(ctx context.Context, event PlexEvent) error {
 	return func(ctx context.Context, event PlexEvent) error {
-		switch event.Payload.Event {
-		case MediaPlay, MediaPause, MediaResume, MediaStop, MediaRate, LibraryNew:
 
-			// render message
-			summary, content, err := RenderNotice(event)
-			if nil != err {
-				log.Printf("error render message: %v", err)
-				return err
-			}
-
-			// build message
-			msg := model.NewMessage(token)
-			msg.AddUId(uid)
-			msg.SetContentType(2)
-			msg.SetSummary(summary)
-			msg.SetContent(content)
-
-			// push message
-			if _, err = wxpusher.SendMessage(msg); err != nil {
-				log.Printf("error push message: %v", err)
-				return err
-			}
-
-			log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title))
-			return nil
-		default:
+		if !lo.Contains(events, event.Payload.Event) && !lo.Contains(events, string(Any)) {
 			log.Printf("ignore event: %s from %s", event.Payload.Event, event.Payload.Server.Title)
 			return nil
 		}
+
+		// render message
+		summary, content, err := RenderNotice(event)
+		if nil != err {
+			log.Printf("error render message: %v", err)
+			return err
+		}
+
+		// build message
+		msg := model.NewMessage(token)
+		msg.AddUId(uid)
+		msg.SetContentType(2)
+		msg.SetSummary(summary)
+		msg.SetContent(content)
+
+		// push message
+		if _, err = wxpusher.SendMessage(msg); err != nil {
+			log.Printf("error push message: %v", err)
+			return err
+		}
+
+		log.Println(msg.Summary, " - ", fmt.Sprintf("From %s on %s", event.Payload.Player.PublicAddress, event.Payload.Player.Title))
+		return nil
 	}
 }

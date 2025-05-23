@@ -185,7 +185,9 @@ var noticeTemplate = `
         </div>
         <div class="content-container">
             <div class="content-title">{{.icon}} {{.payload.Metadata.LibrarySectionTitle}}: {{.payload.Metadata.Title}}</div>
+			{{if .payload.Player.Title}}
             <div class="content-subtitle">From {{.payload.Player.PublicAddress}} on {{.payload.Player.Title}}</div>
+			{{end}}
         </div>
         {{if .thumb}}
         <div class="cover-image">
